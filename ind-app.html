@@ -1,0 +1,391 @@
+<script src="libs/jquery-1.11.1.min.js"></script>
+
+<link 
+	href="main.css" rel="stylesheet">
+<link 
+	href="libs/handsontable.full.min.css" 
+	rel="stylesheet">
+<script src="libs/handsontable.full.js"></script>
+<script src="libs/moment.min.js"></script>
+<link 
+	href="libs/pikaday.css" 
+	rel="stylesheet">
+<script src="libs/pikaday.js"></script>
+<script src="https://cdn.firebase.com/js/client/2.2.9/firebase.js"></script>
+<dom-module id="ind-app">
+	<style>
+		:host {
+			display: block;
+		}
+        * /deep/ #main.paper-drawer-panel > [main] {
+            height: 100%;
+            background-color: #ECEFF1;
+        }
+        paper-drawer-panel {
+          --paper-drawer-panel-left-drawer-container: {
+            z-index:999;
+          };
+        }
+        iron-icon {margin-right: 10px}
+        #filtros {
+            left: -62px; position: relative; display: block;
+        }
+        paper-dropdown-menu {
+            width:132px;
+        }
+	</style>
+	<template>
+
+    <div layout vertical>
+
+      <paper-drawer-panel responsiveWidth="200px" id="drawer">
+        <div main>
+          <paper-toolbar>
+            <paper-icon-button icon="menu" on-click="openMenu"></paper-icon-button>
+            <span class="flex">{{currentTitle}}</span>
+            
+            <div id="filtros">
+            <paper-dropdown-menu label="Paradas" id="filtroParadas">
+              <paper-menu class="dropdown-content" selected="{{ selectedParada }}">
+                <paper-item>Todas</paper-item>
+                <paper-item>Apenas indisponibilidade</paper-item>
+              </paper-menu>
+            </paper-dropdown-menu>
+
+
+            <paper-dropdown-menu label="Filial" id="filtroFilial">
+              <paper-menu class="dropdown-content" selected="{{ selectedFilial }}" id="filialMenu">
+                
+                <template is="dom-repeat" items="{{filiaisList}}">
+                    <paper-item>{{item}}</paper-item>
+                </template>
+              </paper-menu>
+            </paper-dropdown-menu>
+          
+            <paper-dropdown-menu label="Rebocador" id="filtroRebocador" style="width:0;opacity:0">
+              <paper-menu class="dropdown-content" selected="{{ selectedRebocador }}">
+                  <paper-item>Todos</paper-item>
+                  <paper-item>PIRAJÁ</paper-item><paper-item>CHUÍ</paper-item><paper-item>JAUÁ</paper-item><paper-item>ABAIS I</paper-item><paper-item>DAVID</paper-item><paper-item>ATALAIA</paper-item><paper-item>ARARUAMA</paper-item><paper-item>MOSSORÓ</paper-item><paper-item>PENEDO</paper-item><paper-item>PALMARES</paper-item><paper-item>CAETÉ</paper-item><paper-item>PIRAMBU</paper-item><paper-item>PITUBA</paper-item><paper-item>CARAJÁS</paper-item><paper-item>CABURAI</paper-item><paper-item>CURITIBA</paper-item><paper-item>ABROLHOS</paper-item><paper-item>GUARAPARI</paper-item><paper-item>MARAÚ</paper-item><paper-item>JATOBÁ</paper-item><paper-item>SAUIPE</paper-item><paper-item>ARAGIPE</paper-item><paper-item>OIAPOQUE</paper-item>
+              </paper-menu>
+            </paper-dropdown-menu>
+
+            <paper-dropdown-menu label="Ano">
+              <paper-menu class="dropdown-content" selected="{{ selectedAno }}">
+                <paper-item>Todos</paper-item>
+                <paper-item>2015</paper-item>
+                <paper-item>2016</paper-item>
+              </paper-menu>
+            </paper-dropdown-menu>
+            <paper-dropdown-menu label="Mes">
+              <paper-menu class="dropdown-content" selected="{{ selectedMes }}">
+                <paper-item>Todos os meses</paper-item>
+                <paper-item>Janeiro</paper-item>
+                <paper-item>Fevereiro</paper-item>
+                <paper-item>Março</paper-item>
+                <paper-item>Abril</paper-item>
+                <paper-item>Maio</paper-item>
+                <paper-item>Junho</paper-item>
+                <paper-item>Julho</paper-item>
+                <paper-item>Agosto</paper-item>
+                <paper-item>Setembro</paper-item>
+                <paper-item>Outubro</paper-item>
+                <paper-item>Novembro</paper-item>
+                <paper-item>Dezembro</paper-item>
+              </paper-menu>
+            </paper-dropdown-menu>
+            </div>
+          </paper-toolbar>
+          <iron-pages selected="{{ currentPage }}">
+              <section>
+                <ind-maintable id="mainTable"></ind-maintable>
+              </section>
+              <section>
+                <ind-geral id="geral"></ind-geral>
+              </section>
+              <section>
+                <ind-docagemprogramada id="docagem"></ind-docagemprogramada>
+              </section>
+              <section>
+                <ind-lineup id="lineup"><ind-lineup>
+              </section>
+          </iron-pages>
+        </div>
+        <div drawer> 
+            <div style="
+                font-size: 20px;
+                margin-left: 16px;
+                margin-top: 14px;
+                display: block;
+            ">
+                    Paradas
+            </div>
+            <paper-menu>
+                <paper-item on-click="openGeral">
+                    <div relative>
+                        <iron-icon icon="trending-up"></iron-icon> Relatórios
+                    </div>
+                </paper-item>
+                <paper-item on-click="openLancamentos">
+                    <div relative>
+                        <iron-icon icon="maps:directions-boat"></iron-icon>
+                        Lançamentos de paradas
+                    </div>
+                </paper-item>
+              <paper-item on-click="openDocagemProgramada">
+                    <div relative>
+                        <iron-icon icon="icons:alarm-on"></iron-icon>
+                        Docagem programada
+                    </div>
+              </paper-item>
+
+            <div style="
+                font-size: 20px;
+                margin-left: 16px;
+                margin-top: 14px;
+                display: block;
+            ">
+                    Operações
+            </div>
+              <paper-item on-click="openLineUp">
+                    <div relative>
+                        <iron-icon icon="editor:attach-money"></iron-icon>
+                        Line Up
+                    </div>
+              </paper-item>
+            </paper-menu>
+
+        </div>
+      </paper-drawer-panel>
+    </div>
+
+	</template>
+	<script>
+
+		Polymer({
+			is: 'ind-app',
+            properties:{
+                selectedFilial: {
+                    value:0,
+                    observer:'renderFiltrado'
+                },
+                selectedAno:{
+                    observer:'renderFiltrado',
+                    value:0
+                },
+                selectedMes:{
+                    observer:'renderFiltrado',
+                    value:new Date().getMonth()
+                },
+                selectedParada: {
+                    observer:'renderFiltrado',
+                    value:0,
+                },
+                selectedRebocador: {
+                    observer:'renderFiltrado',
+                    value:0
+                },
+                filiais:{
+                    value:null,
+                    observer:'filialChanged'
+                }
+            },
+            filialChanged:function() {
+                console.log('filialChanged');
+                var fistFilial = _.first(this.filiais);
+                window.REB_LIST = window.FILIAL_REBOCADORES[fistFilial];
+                
+                
+                if(fistFilial != "Todas") {
+                    this.filiaisList = (this.filiais);
+                     window.REB_LIST =  _.chain(FilialToRebocadores)
+                                         .pick([this.filiais])
+                                         .values()
+                                         .flatten()
+                                         .value();
+                }
+                else
+                    window.REB_LIST = _.flatten(_.values(FILIAL_REBOCADORES));
+
+                this.renderFiltrado();
+            },
+           
+            renderFiltrado:function() {
+                if(!this.filiaisList)
+                    return;
+                this.async(function(){
+                    var currentYear     = ({0:'Todos',1:2015,2:2016})[this.selectedAno];
+                    var currentFilial = (this.filiaisList)[this.selectedFilial];
+                    var currentMonth    = this.selectedMes;
+                    var currentParada   = Boolean(this.selectedParada);
+                    var currentRebocador = _.union(["Todos"],REB_LIST)[this.selectedRebocador];
+                    var currentPage = this.currentPage;
+                    console.log('currentFilial',currentFilial)
+                    var KeyTable = this.currentPage == 0 ? "mainTable" : "docagem";
+                    var KeyDate =  this.currentPage == 0 ? "dtParada" : "dtOrcamento";
+                    var data = this.currentPage == 0 ? this.safeData : this.$.docagem.safeData;
+                    
+                    var anoMesData = _.filter(data, function(v) {
+
+                        var dt      = moment(v[KeyDate],"DD/MM/YYYY")
+                        var month   = dt.month();
+                        var year    = dt.year();
+                        var isIndisponibilidade = v.isIndisponibilidade;
+                        var reb = v.reb;
+
+                        if(currentPage == 0) {
+                            console.log('Branch A')
+                            return (year == currentYear || currentYear == 'Todos') 
+                            && (month == currentMonth-1 || currentMonth == 0) 
+                            && (isIndisponibilidade == currentParada || currentParada == false) 
+                            && (currentFilial == v.filial || currentFilial == "Todas") ;
+                        }
+                        else
+                        {
+                            console.log('Branch B')
+                            return (reb == currentRebocador || currentRebocador == "Todos") 
+                                && (year == currentYear || currentYear == 'Todos')  
+                                && (month == currentMonth-1 || currentMonth == 0)
+                        }
+                    });
+                    //console.log(currentYear,currentMonth,currentParada);
+
+                    this.$[KeyTable].data = anoMesData;
+                    this.$[KeyTable].render();
+                });
+
+                this.blockLancamentos();
+            },
+            blockLancamentos:function(){
+                var MM = this.selectedMes
+                var MMD = new Date().getMonth()+1;
+                var YYYY =  ({0:2015})[this.selectedAno];
+
+                var sencondWorkingDate = getWorkingDays(f([01,MMD,YYYY]),f([01,MMD+1,YYYY]));
+                console.log('sencondWorkingDate',sencondWorkingDate);
+
+                //let filterDate
+                var Fd = f([01,MM,YYYY]) 
+                //let currentDate
+                var D = f([01,new Date().getMonth()+1,YYYY]);
+
+                IS_BLOCKED = Fd < D
+
+                var isPrevM  = (D.getMonth() - Fd.getMonth()) == 1;
+
+                if(isPrevM) {
+                    if(new Date() > sencondWorkingDate) {
+                        console.log("blocked",new Date(),sencondWorkingDate);
+                    }
+                    else
+                        console.log('not blocked',new Date(),sencondWorkingDate) , IS_BLOCKED = false;
+                }
+
+                function f(d){
+
+                    return moment(d.join("/"),"DD/MM/YYYY").toDate();
+                }
+                function getWorkingDays(startDate, endDate){
+                    var i= 0;
+
+                    var currentDate = startDate;
+                    while (currentDate <= endDate)  {  
+
+                        var weekDay = currentDate.getDay();
+                        if(weekDay != 0 && weekDay != 6) {
+                            if(i > 0)
+                                return (currentDate);
+                            i++;
+                        }
+
+                        currentDate.setDate(currentDate.getDate()+1); 
+                    }
+                }
+            },
+            ready:function()
+            {
+                this.currentPage = 0;
+
+                window.ref = new Firebase(FB_URL+"/lancamentos");
+                window.ref.on("value",function(snapshot)
+                {
+                    this.safeData = snapshot.val()
+                    this.data = _.clone(this.safeData);
+                    _.each(this.data,function(d,k)
+                    {
+                        d.id = k;
+                    })
+                    this.$.geral.data = this.data;
+                    this.renderFiltrado();
+                }
+                .bind(this));
+
+                this.filiaisList = ["Todas","RGD","PNG","STR","SEP","RJ1","VIT","SDR","MAC"];
+            },
+            openMenu: function() {
+                this.$.drawer.openDrawer();
+            },
+            openGeral: function() {
+                this.currentPage = 1;
+                var filtros = this.$.filtros;
+                TweenMax.to([this.$.filtros],.3,{css:{opacity:0},onComplete:function(){ filtros.style.display = "none" }})
+                this.currentTitle = "Paradas / Relatórios";
+            },
+            openLancamentos:function() {
+                this.currentPage = 0;
+                var filtros = this.$.filtros;
+
+                filtros.style.display = "block"
+                TweenMax.to([filtros],.5,{css:{opacity:1}})
+
+                this.currentTitle = "Paradas / Lançamentos";
+
+                TweenMax.to([this.$.filtroFilial,this.$.filtroParadas],.5,{css:{width:132,opacity:1}})
+                TweenMax.to([this.$.filtroRebocador],.5,{css:{width:0,opacity:0}})
+                
+            },
+            openDocagemProgramada:function() {
+                this.currentPage = 2;
+                this.currentTitle = "Docagem programada";
+
+                filtros.style.display = "block"
+                TweenMax.to([filtros],.5,{css:{opacity:1}})
+
+                TweenMax.to([this.$.filtroRebocador],.5,{css:{width:132,opacity:1}})
+                TweenMax.to([this.$.filtroFilial,this.$.filtroParadas],.5,{css:{width:0,opacity:0}})
+                
+                this.renderFiltrado();
+            },
+            openLineUp:function(){
+                this.currentPage = 3;
+                this.currentTitle = "LineUp";
+
+                filtros.style.display = "block"
+                TweenMax.to([filtros],.5,{css:{opacity:1}})
+
+                TweenMax.to([this.$.filtroRebocador],.5,{css:{width:132,opacity:1}})
+                TweenMax.to([this.$.filtroFilial,this.$.filtroParadas],.5,{css:{width:0,opacity:0}})
+                
+                this.$.lineup.render();
+            }
+            // openTodasParadas: function() {
+                
+            //     this.currentPage = 0;
+            //     this.tituloRelatorio = "Todas as Paradas";
+            //     this.$.mainTable.data = this.safeData;
+            //     this.$.mainTable.renderIndisponibiliade();
+
+            // },
+            // openIndisponibilidade: function() {
+
+            //     this.currentPage = 0;
+            //     this.tituloRelatorio = "Indisponibilidade";
+            //     var indisponibilidadeData = _.where(this.safeData, {
+            //         isIndisponibilidade: true
+            //     })
+            //     this.$.mainTable.data = indisponibilidadeData;
+            //     this.$.mainTable.renderIndisponibiliade();
+
+            // },
+		});
+	</script>
+</dom-module>

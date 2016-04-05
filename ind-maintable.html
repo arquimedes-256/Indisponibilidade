@@ -1,0 +1,199 @@
+<link rel="import" href="ind-historico.html">
+<link rel="import" href="bower_components/paper-time-picker/paper-time-picker.html">
+<dom-module id="ind-maintable">
+	<style>
+		:host {
+			display: block;
+		}
+		:host #main /deep/ .wtHolder {
+    		width: 100%!important;
+			height:500px;
+
+		}
+		#toast {
+			z-index:99999;
+		}
+		#main {
+			height:500px;
+		}
+		#fab {
+			background:#00BCD4;
+		}
+	</style>
+	<template>
+		<add-new id="newLanc" style="
+    margin-bottom: 69px;
+"></add-new>
+		<h5 >Lançamentos</h5>
+	  	<div id="main" relative class="hot handsontable htRowHeaders htColumnHeaders"></div>
+
+	  	<paper-fab 
+	  		id="fab"
+	  		icon="add" 
+	  		style="position: absolute!important;top: 37px;background:#00BCD4;color:rgba(0,0,0,0.87)" 
+	  		on-click="showInsertModal"></paper-fab>
+	  	<ind-historico id="indHistorico"></ind-historico>
+		<paper-toast text="NULL" id="toast" duration="10000">
+			<span>Aperte <b>CTRL+Z</b> para desfazer</span>
+		</paper-toast>
+
+		<paper-dialog id="picker-dialog" class="paper-time-picker-dialog" modal>
+			<paper-time-picker id="timePicker"></paper-time-picker>
+			<div class="buttons">
+	          <paper-button dialog-dismiss>CANCELAR</paper-button>
+	          <paper-button dialog-confirm on-tap="timeSelected">OK</paper-button>
+	        </div>
+		</paper-dialog>
+
+	</template>
+	<script src="ind-maintable.js">
+	</script>
+</dom-module>
+
+<dom-module id="add-new">
+	<template>
+		<style>
+			:host {
+				display: none;
+
+			}
+			:host /deep/ .wtHolder {
+				height: 100px!important;
+			}
+            #saveBtn {
+                background: #00C853;
+			    width: 30px;
+			    float: left;
+			    margin: 0;
+            }
+			#toast {
+				z-index:99999;
+			}
+		</style>
+		<h5>Novo Lançamento</h5>
+		<paper-material elevation="1" layout vertical style="
+			width: 1307px;
+		    height: 85px;
+		    padding: 7px 6px;">
+		  	<div relative 
+		  		class="hot handsontable htRowHeaders htColumnHeaders" 
+		  		style="height: 55px; width: 1209px;float: left;" id="mainNew"></div>
+		  	<paper-button raised flex id="saveBtn" on-click="saveNew">
+		  		<iron-icon icon="save" id="saveBtnIcon"></iron-icon></paper-button>
+		</paper-material>
+		<paper-toast text="NULL" id="toast" duration="10000"></paper-toast>
+
+		<paper-dialog id="picker-dialog" class="paper-time-picker-dialog" modal>
+			<paper-time-picker id="timePicker"></paper-time-picker>
+			<div class="buttons">
+	          <paper-button dialog-dismiss>CANCELAR</paper-button>
+	          <paper-button dialog-confirm on-tap="timeSelected">OK</paper-button>
+	        </div>
+		</paper-dialog>
+
+	</template>
+	<script>
+		Polymer({
+			is: 'add-new',
+			timeSelected:function() {
+				var HH 	= new String(this.$.timePicker.hour);
+				var mm 	= new String(this.$.timePicker.minute);
+
+				if(HH.length == 1) HH = [0,HH].join("");
+				if(mm.length == 1) mm = [0,mm].join("");
+
+				var fullHourString = [HH,mm].join(":");
+				this.applyToSelectedDate(fullHourString);
+			},
+			applyToSelectedDate:function(fullHourString) {
+				var oldFullDtString = this.newRegistro[this.currentDateKey];
+				var oldDtString = oldFullDtString.split(" ")[1];
+
+				this.newRegistro[this.currentDateKey] = 
+					oldFullDtString.replace(oldDtString,fullHourString);
+				gridTableNew.render();
+			},
+		    render:function() {
+
+		        var container = this.$.mainNew; container.innerHTML = "";
+		        var saveBtnIcon = this.$.saveBtnIcon;  
+		        var n = INDISPONIBILIDADE_COLUMNS_HEADERS.length-1;
+		        var newRegistro = this.newRegistro = {isIndisponibilidade:false};
+
+		        window.gridTableNew = new Handsontable(container, {
+		            data: [newRegistro],
+		            colHeaders: INDISPONIBILIDADE_COLUMNS_HEADERS.slice(1,n),
+		            colWidths:[80,80,80, 80,80,110, 300,100,100,90,90],
+		            
+		            columns: INDISPONIBILIDADE_COLUMNS.slice(1,n),
+		            rowHeaders: false,
+		            afterChange: function(changes, source) {
+		                if(source == "edit")
+                    	{
+                    		var c = changes[0];
+	                        var EDIT = {
+                                key: c[1],
+                                val: c[3],
+                                oldVal: c[2]
+                            };
+                            if(EDIT.key.startsWith("dt")) 
+                            {
+                            	this.currentDateKey = EDIT.key;
+                            	var M = moment(EDIT.val.split(" ")[1],"H:mm");
+                            	with(this.$.timePicker) 
+                            	{
+                            		hour = M.hour();
+                            		minute = M.minutes();
+                            	}
+                            	this.$["picker-dialog"].open();
+                            }
+                    	}
+		            }.bind(this)
+		        });
+		        $('#main .ht_clone_left > .wtHolder').css('overflow','hidden')
+
+		    },
+		    saveNew:function(){
+
+		    	var obj = window.gridTableNew.getData()[0];
+		    	var isValid = true;
+		    	var columnsWithError = [];
+		    	var requiredColumns = ["reb","dtParada","motivo","consequencia"];
+		    	
+
+		    	_.each(requiredColumns,function(k$){
+		    		var P2 = _.isEmpty(obj[k$]);
+
+		    		if(P2)
+		    			isValid = false, columnsWithError.push(k$);
+		    	})
+
+		    	var p1Vazio = !obj.tempoParada
+		    	var p2Vazio = !obj.diasParada
+
+		    	if( p1Vazio && p2Vazio )
+		    		isValid = false, columnsWithError.push("Tempo estimado para retorno");
+
+
+		    	_.each(obj,function(v,k){
+		    		var P1 = !validateValue("INDISPONIBILIDADE",v,k);
+		    		if(P1)
+		    			isValid = false, columnsWithError.push(k);
+		    	})
+                if(!isValid) {
+                	alert("Objeto inserido é invalido, por favor revise as colunas: "+columnsWithError);
+                	return;
+                }
+	            obj.lastTime = new Date().getTime();
+		    	obj.filial = get.filial_by_reb(obj.reb);
+		    	obj.login = CURRENT_USER_LOGIN.login;
+	            this.lastId = window.ref.push(obj).key();
+			    console.log('id gerado:',this.lastId)
+		    	console.log('saveNew',obj)
+		    	this.$.toast.text = "Novo registro indexado em:"+ obj.dtParada;
+		    	this.$.toast.show();
+
+		    }
+		});
+	</script>
+</dom-module>

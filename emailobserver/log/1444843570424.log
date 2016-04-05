@@ -1,0 +1,2 @@
+Para gerente ? false{"consequencia":"PERDA DE MANOBRA","dtParada":"14/10/2015 14:00","dtRetorno":"14/10/2015 14:15","isCorrigido":true,"isIndisponibilidade":true,"lastTime":1444843518774,"login":"carla.rodrigues","motivo":"REPARO","observacao":"QUEBRA.","reb":"SAUIPE","tempoParada":15,"tempoParadaHistorico":{"-K0bKgqzQhS8yMqEsCTZ":{"login":"carla.rodrigues","oldVal":24},"-K0bN9WlbwVEutuZjozP":{"login":"carla.rodrigues","oldVal":2}},"vlrAfretamento":2000,"vlrConserto":1000,"id":"-K0bJNuDZVtETBABrd7z"}
+obj: {"1_MIN":true,"isCorrigido":false}

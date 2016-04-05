@@ -1,0 +1,134 @@
+<!doctype html>
+
+<html>
+<head>
+  <title>Indisponibilidade</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+
+  <script src="bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
+
+  <link rel="import" href="bower_components/iron-icons/iron-icons.html">
+  <link rel="import" href="bower_components/iron-icons/maps-icons.html">
+  <link rel="import" href="bower_components/iron-icons/editor-icons.html">
+
+  <link rel="import" href="bower_components/paper-toolbar/paper-toolbar.html">
+  <link rel="import" href="bower_components/font-roboto/roboto.html"> 
+  <link rel="import" href="bower_components/paper-button/paper-button.html">
+  <link rel="import" href="bower_components/paper-checkbox/paper-checkbox.html">
+  <link rel="import" href="bower_components/paper-icon-button/paper-icon-button.html">
+  <link rel="import" href="bower_components/paper-fab/paper-fab.html">
+  <link rel="import" href="bower_components/paper-tabs/paper-tabs.html">
+  <link rel="import" href="bower_components/paper-toast/paper-toast.html">
+  <link rel="import" href="bower_components/paper-drawer-panel/paper-drawer-panel.html">
+  <link rel="import" href="bower_components/paper-menu/paper-menu.html">
+  <link rel="import" href="bower_components/paper-material/paper-material.html">
+  <link rel="import" href="bower_components/paper-item/paper-item.html">
+  <link rel="import" href="bower_components/iron-pages/iron-pages.html">
+
+  <link rel="import" href="bower_components/paper-menu/paper-menu.html">
+  <link rel="import" href="bower_components/paper-item/paper-item.html">
+  <link rel="import" href="bower_components/paper-toast/paper-toast.html">
+  <link rel="import" href="bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+  
+  <link rel="import" href="ind-app.html">
+  <link rel="import" href="ind-geral.html">
+  <link rel="import" href="ind-maintable.html">
+  <link rel="import" href="ind-login.html">
+  <link rel="import" href="ind-docagemprogramada.html">
+  <link rel="import" href="ind-lineup.html">
+  
+  <script src="main.js"></script>
+
+ <script>
+
+    var FB_URL = ["m", "o", "c", ".", "o", "i", "e", "s", "a", "b", "e", "r", "i", "f", ".", "e", "d", "a", "d", "i", "l", "i", "b", "i", "n", "o", "p", "s", "i", "d", "n", "i", "-", "n", "s", "/", "/", ":", "s", "p", "t", "t", "h"]                                              .reverse().join("");
+ </script>
+  <script type="text/javascript" src="libs/underscore-min.js"></script>
+
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+  <script src="pivottable-master/pivottable-master/dist/pivot.js"></script>
+  <script src="pivottable-master/pivottable-master/dist/pivot.pt.min.js"></script>
+  <script src="libs/moment.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.18.0/TweenMax.min.js"></script>
+
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="pivottable-master/pivottable-master/dist/pivot.css">
+</head>
+
+<body unresolved>
+  <ind-login></ind-login>
+<style>
+html /deep/ table.pvtTable tr th, table.pvtTable tr th {
+    background-color: #C8E6C9;
+    border: 2px solid #fff;
+    font-size: 9pt;
+    padding: 5px;
+}
+ html /deep/ .pvtAggregator,html /deep/ .pvtAggregator:hover {
+  background-color: #FFD600;
+}
+/*html /deep/ .pvtAxisContainer li span.pvtAttr {
+    background: #64DD17;
+    border: none;
+    padding: 11px 21px;
+    white-space: nowrap;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+}*/
+
+html /deep/ .pvtAxisContainer li {
+    padding: 8px 6px;
+    list-style-type: none;
+    cursor: move;
+    margin-bottom: 6px;
+    margin-top: 6px;
+}
+html /deep/ .pvtFilterBox {
+      top: -69px!important;
+}
+html /deep/ iron-dropdown {
+  z-index:999;
+}
+html /deep/ paper-menu-button /deep/ * {
+  color:#000!important;
+}
+html /deep/ .unfocused-line.paper-input-container {
+  background:#1A237E!important;
+}
+html /deep/ paper-menu-button /deep/ paper-ripple {
+  background:#9FA8DA;
+}
+html /deep/ .style-scope.paper-input {
+    left: 10px!important;
+    margin-bottom: 1px;
+}
+html /deep/ paper-material {
+  padding: 7px;
+  margin: 2px;
+}
+html /deep/ td[class] {
+  vertical-align: middle!important;
+  text-align: center!important;
+  font-size: 11px;
+}
+html /deep/ td.htNumeric {
+  text-align: right!important;
+
+}
+html /deep/ iron-overlay-backdrop {
+  z-index: 999!important;
+}
+html /deep/ paper-dialog {
+  z-index:1000!important;
+}
+html /deep/ .ht_clone_left.handsontable {
+  display: none;
+}
+  </style>
+</body>
+</html>

@@ -1,0 +1,282 @@
+<dom-module id="ind-docagemprogramada">
+	<template>
+		<style>
+			:host {
+				display: block;
+			}
+            #fab {
+                background:#00BCD4;
+            }
+		</style>
+        <add-new-docagem id="newLanc" style="margin-bottom: 69px;">></add-new-docagem>
+		<h5 style="margin-top: 18px;">Lançamentos</h5>
+	  	<div id="main" relative class="hot handsontable htRowHeaders htColumnHeaders"></div>
+
+	  	<paper-fab 
+	  		id="fab"
+	  		icon="add" 
+	  		style="position: absolute!important;top: 37px;" 
+	  		on-click="showInsertModal"></paper-fab>
+		<paper-toast text="NULL" id="toast" duration="10000">
+			<span>Aperte <b>CTRL+Z</b> para desfazer</span>
+		</paper-toast>
+	</template>
+	<script>
+
+Polymer({
+    is: 'ind-docagemprogramada',
+    deleteRenderer:function(instance, td, row, col, prop, value, cellProperties) 
+    {
+        td.innerHTML = '<iron-icon icon="icons:delete"></iron-icon>'    
+        with(td.style) {
+            verticalAlign =  "middle";
+            textAlign = "center";
+            cursor = "pointer";
+        }
+        td.onclick = function(){
+            var _obj = this.data[cellProperties.row];
+            var id = _obj.id;
+            console.log(id,cellProperties,this);
+            if(confirm("Tem certeza que deseja excluir essa docagem ?")) {
+                console.log("Registro",id,"excluido com sucesso");
+                var TD = jQuery(td).parent().find('td');
+
+                TweenMax.to(TD, 1, {css:{background:"#FFD600",height:0,opacity:0}});
+                this.async(function(){
+                    new Firebase(FB_URL+"/docagens/"+id).remove();
+                },900)
+            }
+            else {console.log("Cancelado")}
+        }
+        .bind(this);
+
+        return td;
+    },
+    ready: function() {
+
+    	window.docagemRef = this.ref = new Firebase([FB_URL,"docagens"].join("/"));
+
+    	this.ref.on('value',function(dataSnap){
+    		this.data = dataSnap.val();
+    		_.each(this.data,function(d,k)
+            {
+                d.id = k;
+            })
+            this.data = _.values(this.data);
+            this.safeData = _.clone(this.data);
+        	this.render()
+            console.log('onvalueDocagem',this.data)
+    	}
+    	.bind(this));
+    },
+    render: function() {
+        window.DOCAGEM_COLUMNS_HEADERS = 
+        [
+        "Tp.Docagem","Rebocador","Local", "Dt.Orçamento", "Dt.Previsao", "Dt.Real(Inicio)","Dt.Real(Fim)",
+        	"Custo($)","#"
+        ];
+        window.DOCAGEM_COLUMNS = [
+
+        {data:'tpDocagem', type: 'dropdown',
+            source:["DOCAGEM","OVERHAUL","TOPEND"]},
+        {
+            data: 'reb',
+            type: 'dropdown',
+            source: window.REB_LIST,
+        },{
+            data:'local'
+        }, {
+            data: 'dtOrcamento',
+            type: 'date',
+            dateFormat: 'DD/MM/YYYY H:mm',
+            correctFormat:true
+        },  {
+            data: 'dtPrevisao',
+            type: 'date',
+            dateFormat: 'DD/MM/YYYY H:mm',
+            correctFormat:true
+        }, {
+            data: 'dtRealInicio',
+            type: 'date',
+            dateFormat: 'DD/MM/YYYY H:mm',
+            correctFormat:true
+        },{
+            data: 'dtRealFim',
+            type: 'date',
+            dateFormat: 'DD/MM/YYYY H:mm',
+            correctFormat:true
+        }, {
+            data: 'custo',
+            type: 'numeric',
+            format: '0,0.00'
+        },{
+            data:'deleteThis',
+            renderer:this.deleteRenderer.bind(this)
+        }];
+
+        this.renderTable();
+    },
+    renderTable: function() {
+        var container = this.$.main;
+        container.innerHTML = "";
+        if(this.data && this.data.length) 
+        {
+            window.docagemTable = new Handsontable(container, {
+                data: this.data,
+                colHeaders: DOCAGEM_COLUMNS_HEADERS,
+                rowHeaders: true,
+                colWidths:[150,100,100,150, 150,150, 150, 100],
+                manualColumnFreeze: true,
+                columnSorting: true,
+                columns: DOCAGEM_COLUMNS,
+                height: 540,
+                width: 1326,
+                rowHeaders: true,
+                afterChange: function(changes, source) {
+                    if(source == "edit")
+                    {
+                        console.log(changes,source);
+
+                        _.each(changes,function(c){
+                            if(c[2] != c[3]) {
+                                var _obj = this.data[c[0]];
+                                var id = _obj.id;
+                                var duple = {key:c[1],val:c[3],id:id};
+
+
+                                if(validateValue("DOCAGEM",duple.val,duple.key)) {
+
+                                    console.log(duple,c)
+                                    var obj = {};
+                                    obj[duple.key] = duple.val;
+                                    this.ref.child(id).update(obj);
+                                    this.removeCalendarios();
+
+                                    this.$.toast.text = "Registro indexado em: "+ _obj.dtParada+" alterado de "+c[2]+" para "+c[3];
+                                    this.$.toast.show();
+
+                                }
+                                else {
+                                    alert("Valor inserido inválido, por favor utilize algum valor válido, use CTRL+Z para retornar");
+                                    //console.log('error ==> _obj',_obj)
+                                }
+
+                            }
+                        }
+                        .bind(this))
+                    }
+                }.bind(this)
+            });
+        }
+        else
+             container.innerHTML = "Não existem valores para os filtros consultados.";
+
+
+        this.$.newLanc.render();
+    },
+    showInsertModal:function(e,d,s) {
+        var S = this.$.newLanc.style;
+        var fab = this.$.fab;
+
+        if (S.display == "none" || !S.display)
+            S.display = "block",fab.icon = "close";
+        else
+            S.display = "none",fab.icon = "add";
+
+    },
+    removeCalendarios:function() {
+        jQuery('.htDatepickerHolder').remove();
+    }
+});
+
+	</script>
+</dom-module>
+
+
+<dom-module id="add-new-docagem">
+    <template>
+        <style>
+            :host {
+                display: none;
+
+            }
+            :host /deep/ .wtHolder {
+                height: 124px !important;
+            }
+            #saveBtn {
+                background: #00C853;
+                width: 30px;
+                float: left;
+                margin: 0;
+            }
+            #toast {
+                z-index:99999;
+            }
+
+        </style>
+        <h5>Nova docagem</h5>
+        <paper-material elevation="1" layout vertical 
+        style="width: 1171px;height: 66px;">
+            <div relative 
+                class="hot handsontable htRowHeaders htColumnHeaders" 
+                style="    height: 55px;
+    width: 1062px;
+    float: left;" id="mainNew"></div>
+            <paper-button raised flex id="saveBtn" on-click="saveNew">
+                <iron-icon icon="save" id="saveBtnIcon"></iron-icon></paper-button>
+        </paper-material>
+        <paper-toast text="NULL" id="toast" duration="10000"></paper-toast>
+    </template>
+    <script>
+        Polymer({
+            is: 'add-new-docagem',
+            render:function() {
+
+                var container = this.$.mainNew;
+                var saveBtnIcon = this.$.saveBtnIcon;
+                container.innerHTML = "";
+                var n = _.size(DOCAGEM_COLUMNS);
+                window.docagemTableNew = new Handsontable(container, {
+                    data: [{}],
+                    colHeaders: _.first(DOCAGEM_COLUMNS_HEADERS,n-1),
+                    colWidths:[150,100,150, 150,150, 150, 100],
+                    manualColumnFreeze: true,
+                    columnSorting: true,
+                    columns: _.first(DOCAGEM_COLUMNS,n-1),
+                    rowHeaders: true,
+                    afterChange: function(changes, source) {
+                        if(source == "edit")
+                        {
+                            
+                        }
+                    }.bind(this)
+                });
+
+            },
+            saveNew:function(){
+                //definido lá em cima
+                var obj = window.docagemTableNew.getData()[0];
+                var isValid = true;
+                
+                var columnsWithError = [];
+
+                _.each(obj,function(v,k){
+                    if(!validateValue("DOCAGEM",v,k))
+                        isValid = false, columnsWithError.push(k);
+                })
+                if(!isValid) {
+                    alert("Objeto inserido é invalido, por favor revise as colunas: "+columnsWithError);
+                    return;
+                }
+
+                this.lastId = window.docagemRef.push(obj).key();
+
+                console.log('id gerado:',this.lastId)
+                console.log('saveNew',obj)
+                this.$.toast.text = "Nova docagem salva com sucesso!";
+                this.$.toast.show();
+
+            }
+        });
+    </script>
+</dom-module>

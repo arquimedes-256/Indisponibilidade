@@ -1,0 +1,255 @@
+<link rel="import" href="bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="bower_components/iron-flex-layout/iron-flex-layout.html">
+
+<dom-module id="ind-historico">
+	<template>
+		<style>
+			:host {
+				display: block;
+			}
+			#dialog {
+				max-height: 800px;
+				width: 700px;
+				padding: 8px;
+				top: -11px;
+			}
+			#dialogContent{
+				width:100%;
+			}
+			#newHistorico {
+				@apply(--layout-horizontal);
+			}
+			#newHistorico paper-input {
+				@apply(--layout-flex);
+			}
+			paper-button {
+				@apply(--layout-flex-one);
+			}
+			table {border:none;}
+			table td,th {text-align: left!important}
+			.iconColumn {
+				width:32px;
+			}
+	
+		</style>
+		<paper-dialog modal id="dialog">
+			<h4>Histórico(<span>{{lancamentoData.reb}}</span>)</h4>
+			<span>Parada: <b>{{lancamentoData.dtParada}}</b></span>
+			<div id="newHistorico">
+				<paper-input always-float-label
+					label="Tempo que você precisa(horas):"
+					value="{{tempoParada}}"></paper-input>
+				<paper-input always-float-label style="margin-left:5px"
+					label="Observação:"
+					value="{{observacao}}"></paper-input>
+			<paper-button raised on-click="enviar">Enviar!</paper-button>
+			</div>
+			<table id="dialogContent">
+				<thead>
+					<th>Horas</th>
+					<th>Observação</th>
+					<th class="iconColumn">#</th>	
+					<th class="iconColumn">#</th>	
+				</thead>
+				<tbody id="dialogContentTBody"></tbody>
+			</table>
+			<br/>
+			<table id="tableStatus" style="display:none">
+				<tr>
+					<td>
+						<span>
+							Tempo estimado inicialmente: 
+						</span>
+					</td>
+					<td>
+						<span><b>{{lancamentoData.diasParada}}</b> dias</span> e
+						<span><b>{{lancamentoData.tempoParada}}</b> h</span> = 
+						<b>{{totalHorasParada}}</b> horas
+					</td>
+				</tr>
+				<tr>
+					<td>Total tempo solicitado após: </td>
+					<td><b>{{totalTempoSolicitado}}</b> h</td>
+				</tr>
+				<tr>
+					<td>Total tempo estimado(inicial + solicitado após):</td>
+					<td><b>{{totalTempoEstimado}}</b> h</td>
+				</tr>
+				<tr>
+					<td>Retorno previsto em:</td>
+					<td><b>{{dtRetornoPrevisto}}</b></td>
+				</tr>
+			</table>
+		    <div class="buttons">
+				<!--
+				<paper-button 
+					raised 
+					style="width: 300px;"
+					on-click="rebocadorRetornouHandler">
+					Rebocador retornou!
+				</paper-button>
+				-->
+		    	<paper-button dialog-confirm autofocus>Fechar</paper-button>
+		    </div>
+		</paper-dialog>
+	</template>
+	<script>
+		Polymer({
+			is: 'ind-historico',
+			properties:{
+				lancamentoId:{
+					value:null
+				}
+			},
+			observers:['computeTempoParada(lancamentoData)','computeTableStatus(totalTempoEstimado)'],
+			computeTableStatus:function(totalTempoEstimado) 
+			{
+				this.blockTableStatusIF('tableStatus',_.isNaN(totalTempoEstimado))
+			},
+			blockTableStatusIF:function(id,P){
+				if(P)
+					this.$[id].style.display = "none";
+				else
+					this.$[id].style.display = "block";
+			},
+			enviarEmail:function(){
+				console.log("Email enviado",this.lancamentoData);
+
+				$.ajax({
+						url:'http://201.45.163.179:8083/mail/sendmail.php?p='+encodeURI(JSON.stringify(this.lancamentoData)),
+						type:"GET",
+						crossDomain :true
+					})
+			},
+
+			rebocadorRetornouHandler:function(){
+				if(confirm("Você deseja informar que o rebocador retornou às: "+
+					this.dtRetornoPrevisto+" ?!")){
+					//this.lancamentoData.dtRetorno = this.dtRetornoPrevisto;
+					this.enviarEmail();
+				}
+			},
+			computeTempoParada:function(lancamentoData){
+				
+				lancamentoData.reverse();
+				
+				this.totalHorasParada = lancamentoData.diasParada*24 + lancamentoData.tempoParada;
+				
+				var S = 0;
+				_.each(lancamentoData.historico,function(h){
+					S+= h.tempoParada;
+				})
+				lancamentoData.isPrevisto = true;
+				
+				this.totalTempoSolicitado = S;
+				this.totalTempoEstimado = this.totalHorasParada + this.totalTempoSolicitado;
+				
+				this.dtRetornoPrevisto = moment(lancamentoData.dtParada,"DD/MM/YYYY H:mm")
+				.add(this.totalTempoEstimado,"hours").format("DD/MM/YYYY H:mm");
+
+				this.blockTableStatusIF('dialogContent',_.size(lancamentoData.historico) == 0)
+			},
+			getHistoricoRef:function(k)
+			{
+				var URL = FB_URL+"/lancamentos/"+this.lancamentoData.id+"/historico";
+				return new Firebase(URL+(k ? "/"+k:""));
+			},
+			enviar:function(){
+				if(!_.isEmpty(this.tempoParada) && _.isEmpty(this.observacao)) {
+					alert("Por favor justifique esse tempo.");
+					return;
+				}
+				var tP = parseInt(this.tempoParada);
+				if(_.isNaN(tP) && !_.isEmpty(this.tempoParada) ) {
+					alert("O tempo precisa ser um número");
+					return;
+				}
+
+
+				var ref = this.getHistoricoRef();
+				var Obj = 
+				{
+					timestamp: 		Firebase.ServerValue.TIMESTAMP,
+					tempoParada: 	tP || "",
+					observacao: 	this.observacao,
+					login: 			CURRENT_USER_LOGIN.login
+				};
+				var key = ref.push(Obj).key();
+				ref.once("child_added",function(){
+					this.reset();
+				}
+				.bind(this))
+			},
+			reset:function() {
+				this.async(function(){
+					this.open(INDTABLE[this.lancamentoData.id]);
+				},200);
+			},
+			addRow:function(v,k) {
+
+				var dialogContentTBody = this.$.dialogContentTBody;
+
+				var tdObs 	= document.createElement('td'); tdObs.innerText = v.observacao;
+				var tdHrs	= document.createElement('td'); tdHrs.innerText = v.tempoParada;
+				var tdDel	= document.createElement('td'); tdDel.innerHTML = '<iron-icon icon="icons:delete"></iron-icon>';
+				tdDel.style.cursor = "pointer";
+
+				var tdSnd	= document.createElement('td'); tdSnd.innerHTML = '<iron-icon icon="icons:mail"></iron-icon>';
+				tdSnd.style.cursor = "pointer";
+
+				tdSnd.onclick = function(){
+					if(confirm("Você deseja realmente enviar esse email ?")){
+						this.lancamentoData.dtEstimada = this.dtRetornoPrevisto;
+
+						var diasReal = Math.round(this.totalTempoEstimado/24);
+
+						if(diasReal > 0) {
+							this.lancamentoData.diasParada 	= diasReal;
+							this.lancamentoData.tempoParada = "";
+						}
+						else
+						{
+							this.lancamentoData.diasParada 	= "";
+							this.lancamentoData.tempoParada = this.totalTempoEstimado;
+						}
+
+						this.enviarEmail();
+					}
+				}
+				.bind(this)
+
+				tdDel.onclick = function(){
+					if(confirm("Você realmente deseja excluir esse historico ?!"))
+						var ref = this.getHistoricoRef(k);
+						ref.remove();
+						this.reset();
+				}
+				.bind(this);
+
+				var tr = document.createElement('tr');
+				with(tr) {
+					appendChild(tdHrs);
+					appendChild(tdObs);
+					appendChild(tdDel);
+					appendChild(tdSnd);
+				}
+				dialogContentTBody.appendChild(tr);
+			},
+			open:function(lancamentoData) {
+				
+				this.lancamentoData = lancamentoData;
+
+				var dialogContentTBody = this.$.dialogContentTBody; 
+				dialogContentTBody.innerHTML = "";
+
+				_.each(lancamentoData.historico,function(v,k){
+					this.addRow(v,k);
+				}
+				.bind(this));
+
+				this.$.dialog.open();
+
+			}
+		});
+	</script>
+</dom-module>

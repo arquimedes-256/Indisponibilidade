@@ -1,0 +1,158 @@
+<dom-module id="ind-login">
+	<template>
+		<style>
+			:host {
+				display: block;
+			}
+			#box {
+				width: 300px;
+				margin:0 auto;
+				position: relative;
+				top: 10px;
+			}
+			paper-button {
+				background-color: #006064;
+			    color: #FFF;
+			    width: 100%;
+			}
+			paper-input /deep/ input[is="iron-input"] {
+				background:transparent!important;
+			}
+		</style>
+
+		<paper-material elevation="1" id="box">
+			<h4>
+				<img class="profile-img" 
+					src="http://sig.sulnorte.com.br/sn/app/image/logo2.png" 
+					style="width: 51px;position: relative;top: -3px;margin: -4px;" 
+					alt=""> Paradas
+			</h4>
+			
+			<paper-input 
+				label="Login:" 
+				id="loginInput" 
+				value="lucas.silva"></paper-input>
+			<paper-input 
+				label="Senha:" 
+				id="passInput" 
+				type="password" 
+				value="H2so4,333"></paper-input>
+
+			<paper-button 
+				raised 
+				on-click="autenticar" 
+				style="background-color: #3f51b5;">
+				Entrar!
+			</paper-button>
+			
+		</paper-material>
+		
+	</template>
+	<script>
+		Polymer({
+			is: 'ind-login',
+			ready:function() {
+				
+				if(!Firebase){
+					alert("Erro de conexão com internet, favor verificar com TI");
+					return;
+				}
+
+				var motivosRef 			= new Firebase(FB_URL+"/motivos");
+				var consequenciaRef 	= new Firebase(FB_URL+"/consequencias");
+				var filialRebocadores	= new Firebase(FB_URL+"/filial-rebocadores");
+
+				motivosRef.once('value',function(dataSnapshot){
+					window.MOTIVO_LIST = _.values(dataSnapshot.val());
+				});
+
+				consequenciaRef.once('value',function(dataSnapshot){
+					window.CONSEQUENCIA_LIST = _.values(dataSnapshot.val());
+				});
+
+				filialRebocadores.once('value',function(dataSnapshot){
+					window.FILIAL_REBOCADORES = _.values(dataSnapshot.val());
+				});
+
+				$.get('empresas.list'	,function(data){ParseList('empresas',data)});
+				$.get('navios.list'		,function(data){ParseList('navios'	,data,['nome','dwt'])});
+				$.get('locais.list'		,function(data){ParseList('locais'	,data,['estado','porto','terminal'])});
+
+				var ListMap = window.ListMap = {};
+				function ParseList(namespace ,data ,Cols) {
+					if(_.isEmpty(Cols)) {
+						ListMap[namespace] = new String(data).split('\n');
+					} else {
+
+						var List = new String(data).split('\n')
+						_.each(List,function(item){
+							var itemDef = item.split(';');
+							_.each(itemDef,function(val,valIndex){
+								var K = namespace+'-'+Cols[valIndex]
+								if(!ListMap[K])
+									ListMap[K] = [];
+
+								ListMap[K].push(val);
+							})
+							
+						})
+					}
+				}
+			},
+			autenticar:function() {
+
+				var login 	=	this.$.loginInput.value;
+				var pass	=	this.$.passInput.value;
+
+				this.autenticarLDAP(login,pass);
+			},
+			onError: {
+				LDAP:function() {
+					alert("Senha incorreta ou usuário não existe na rede.")
+				},
+				FB:function() {
+					alert("Seu login até existe na rede mas ele não foi configurado para trabalhar nesse sistema. Entre em contato com o Planejamento SN")
+				}
+			},
+			autenticarLDAP:function(login,senha){
+				var onError 		= this.onError;
+				var autenticarFB 	= this.autenticarFB.bind(this);
+
+				jQuery.ajax(
+					"http://sig.sulnorte.com.br/sn/bus?user="+login+"&pass="+senha)
+					.complete(function(data){
+						var userObj = JSON.parse(data.responseText);
+						if(userObj.status)
+							autenticarFB(login,senha);
+						else
+							onError.LDAP();
+				});
+			},
+			autenticarFB:function(login,senha) {
+				var ref = new Firebase(FB_URL+"/usuarios/"+login.replace('.','-'));
+				var onError = this.onError;
+				var initHaltApp = this.initHaltApp.bind(this);
+
+				ref.once('value',function(dataSnapshot){
+					var userVal = dataSnapshot.val();
+					if(userVal) {
+						initHaltApp(_.extend(userVal,{login:login}));
+					}
+					else
+						onError.FB();
+				});
+			},
+			initHaltApp:function(userVal) {
+				if(!document.querySelector('ind-app')) {
+
+					var indApp = document.createElement('ind-app');
+					indApp.filiais = _.keys(userVal.filiais);
+					this.style.display = "none";
+					document.body.appendChild(indApp);
+					window.CURRENT_USER_LOGIN = userVal;
+
+				}
+			}
+		});
+	</script>
+</dom-module>

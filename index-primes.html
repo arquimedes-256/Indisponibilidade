@@ -1,0 +1,163 @@
+<!doctype html>
+
+<html>
+<head>
+  <title>Indisponibilidade</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+
+  <script src="bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
+
+  <link rel="import" href="bower_components/iron-ajax/iron-ajax.html">
+  <link rel="import" href="bower_components/iron-icons/iron-icons.html">
+  <link rel="import" href="bower_components/iron-icons/maps-icons.html">
+  <link rel="import" href="bower_components/paper-toolbar/paper-toolbar.html">
+  <link rel="import" href="bower_components/font-roboto/roboto.html"> 
+  <link rel="import" href="bower_components/paper-button/paper-button.html">
+  <link rel="import" href="bower_components/paper-checkbox/paper-checkbox.html">
+  <link rel="import" href="bower_components/paper-icon-button/paper-icon-button.html">
+  <link rel="import" href="bower_components/paper-fab/paper-fab.html">
+  <link rel="import" href="bower_components/paper-tabs/paper-tabs.html">
+  <link rel="import" href="bower_components/paper-toast/paper-toast.html">
+  <link rel="import" href="bower_components/paper-drawer-panel/paper-drawer-panel.html">
+  <link rel="import" href="bower_components/paper-menu/paper-menu.html">
+  <link rel="import" href="bower_components/paper-material/paper-material.html">
+  <link rel="import" href="bower_components/paper-item/paper-item.html">
+  <link rel="import" href="bower_components/iron-pages/iron-pages.html">
+
+  <link rel="import" href="bower_components/paper-menu/paper-menu.html">
+  <link rel="import" href="bower_components/paper-item/paper-item.html">
+  <link rel="import" href="bower_components/paper-toast/paper-toast.html">
+  <link rel="import" href="bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+  
+  <script type="text/javascript" src="libs/underscore-min.js"></script>
+
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+  <script src="pivottable-master/pivottable-master/dist/pivot.js"></script>
+  <script src="pivottable-master/pivottable-master/dist/pivot.pt.min.js"></script>
+
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="pivottable-master/pivottable-master/dist/pivot.css">
+</head>
+
+<body unresolved>
+  <dom-module id="x-primes-table">
+  	<template>
+  		<iron-ajax
+	    auto
+	    url="out3.json"
+	    handle-as="json"
+	    on-response="handleResponse"
+	    last-response="{{ajaxResponse}}"></iron-ajax>
+  		<style>
+  			:host {
+  				display: block;
+  			}
+  		</style>
+  		<div id="output"></div>
+  		prime-table
+  	</template>
+  	<script>
+  		Polymer({
+  			is: 'x-primes-table',
+  			handleResponse:function(){
+
+var testData = [{"$p":1,"$k":1,"x":0},{"$p":2,"$k":3}];
+var testData2 = [
+{"$k":0,"$p":0,"$π(k)":0,"$k/π(k)":2,"2^":1,"x^1":2},
+{"$k":1,"$p":0,"$π(k)":0,"$k/π(k)":2,"2^":1,"x^1":2},
+{"$k":2,"$p":1,"$π(k)":1,"$k/π(k)":2,"2^":1,"x^1":2}];
+
+
+
+		      console.log(this.ajaxResponse)
+  				// dr(k) not in (3,6,9) and first-digit(k) is not even
+          jQuery(this.$.output).pivotUI(this.ajaxResponse);
+  			}
+  		});
+  	</script>
+  	 <style>
+.pvtAxisContainer {
+      height: 30px!important;
+  }
+        :host {
+            display: block;
+        }
+        :host /deep/ table {
+            background: transparent !important;
+            border: none !important;
+            margin-bottom: 1.25rem !important;
+            table-layout: auto !important;
+        }
+        :host /deep/ tr {
+            background: transparent !important;
+        }
+        :host /deep/ paper-material {
+            background:#FFF;
+        }
+        :host /deep/ paper-material.pvtAxisContainer.pvtRows.ui-sortable.x-scope.paper-material-0 {
+            width: 195px;
+            float: left;
+        }
+        :host /deep/ paper-material.pvtAxisContainer.pvtHorizList.pvtCols.ui-sortable.x-scope.paper-material-0 {
+            width: 650px;
+            padding: 16px;
+            padding-top: 19px;
+            padding-bottom: 19px;
+            float: left;
+        }
+        :host /deep/ paper-material.pvtVals.x-scope.paper-material-0 {
+            float: left;
+            padding: 10px 10px;
+        }
+        :host /deep/ paper-material.pvtAxisContainer.pvtUnused.pvtHorizList.ui-sortable.x-scope.paper-material-0 {
+                width: 847px;
+    padding: 17px 7px;
+    margin-bottom: 13px;
+        }
+        :host /deep/ paper-material {
+            display: inherit;
+            float:left;
+        }
+        :host /deep/ .pvtTriangle {
+            cursor: pointer;
+            color: #000;
+        }
+        :host /deep/ li {
+            box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+            margin-right: 5px;
+            background:#C5CAE9;
+        }
+        :host /deep/ li span.pvtAttr {
+            background:transparent !important;
+            border:none !important;
+        }
+        :host /deep/ .pvtRenderer {
+            display:none;
+        }
+        .pvtAxisContainer li {
+    padding: 8px 6px;
+    list-style-type: none;
+    cursor: move;
+    /* width: 100px; */
+    float: left!important;
+}
+        :host /deep/ .pvtRendererArea {
+                
+                overflow: scroll;
+                width: 868px;
+                height: 434px;
+        } 
+        :host /deep/ tr:hover td {
+            background-color: #E8F5E9!important;
+        }
+    </style>
+  </dom-module>
+  <x-primes-table></x-primes-table>
+<style>
+</style>
+</body>
+</html>
